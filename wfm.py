@@ -136,7 +136,7 @@ else:
 
 
     
-#checking if tuning is working wor each model or not
+#checking if tuning is working for each model or not
 #for model_name, params in param_grids.items():
 #    print(f"\n--- Tuning {model_name} ---")
 #    
@@ -156,3 +156,4 @@ else:
 #        print("Test R2:", r2_score(y_test, y_pred_tuned))
 #    else:
 #        print(f"No model found for {model_name}")
+
