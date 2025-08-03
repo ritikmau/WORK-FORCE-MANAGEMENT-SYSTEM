@@ -1,6 +1,24 @@
 import pandas as pd
 import numpy as np
 
+# Models
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.svm import SVR
+
+# Metrics
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+
+
+from sklearn.model_selection import GridSearchCV
+
+
+
+
+
 #step1 importing data
 df = pd.read_csv("C:/Users/VIVEK/OneDrive/Documents/DA EPRIME/ML/allocations.csv")
 
@@ -10,7 +28,6 @@ x1 = df.iloc[:,0:3]  #character variables
 x2=df.iloc[:,3:4]  #numeric variables
 
 # step2 cleaning data
-from sklearn.preprocessing import LabelEncoder
 
 #converting character to numeric
 x1 = x1.apply(LabelEncoder().fit_transform)
@@ -29,36 +46,113 @@ del x1,x2
 
 #step 3 model training
 # ML model
-from sklearn.ensemble import RandomForestRegressor
 
-regressor = RandomForestRegressor(n_estimators=10, random_state = 0, oob_score = True)
-#n_estimator is the number of decision trees to be made it is determined by optimal tree concept
-#random_state tells model to start with this sample for first whenever it is executed  to get same outputs otherwise trees will be built different everytime
-#oob_score 
-# to see all the parameters and their explanation select the randomforestregressor and press ctrl+i
-
-#used to train the model by syntax: model.fit(x,y) with parameters
-regressor.fit(x, y)
-
-#trying changing nestmiters 
-regressor = RandomForestRegressor(n_estimators=200, random_state = 0, oob_score = True)
-regressor.fit(x, y)
+x_train, x_test, y_train, y_test = train_test_split(x,y, test_size=1/3, random_state=0)
 
 
-#evaluating model using gridsearch for best value of tree and leaf size and deapth. You can pass all the possible values as a parameters
-# using hyperperameters to improve accuracy from overfitting
-from sklearn.model_selection import GridSearchCV
-#creates a grid and pick x values sequencially
+#forming dict and running each model one by one
 
-#now leaving the regressor behind, creating new object for the same by using hyper parameter
-params= {"n_estimators": [5,10,25,50,200,150,250,300], "min_samples_leaf":[1,2,3], "max_depth": [i for i in range(1,11)]}
-#here we have stored the parameters in an object
-
-model = GridSearchCV(regressor, params, cv=3)
-rf_result = model.fit(x,y)
-
-rf_result.best_estimator_
-regressor = RandomForestRegressor(n_estimators=25, random_state = 0, oob_score = True)
-regressor.fit(x, y)
+models = {
+    "Random Forest": RandomForestRegressor(n_estimators=10, random_state = 0, oob_score = True),
+    "Linear Regression": LinearRegression(),
+    "Ridge": Ridge(alpha=1.0),
+    "Lasso": Lasso(alpha=0.1),
+    "Gradient Boosting": GradientBoostingRegressor(),
+    "KNN": KNeighborsRegressor(n_neighbors=5),
+    "SVR": SVR(kernel='rbf')
+    }
 
 
+
+
+
+
+results = []
+
+
+for name, model in models.items():
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+    r2 = r2_score(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    mae = mean_absolute_error(y_test, y_pred)
+    results.append([name, r2, rmse, mae])
+    print(f"{name} -> R2: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}")
+
+# 7. Find best model (highest R2)
+best_model = sorted(results, key=lambda x: x[1], reverse=True)[0]
+print("\nBest Model:", best_model[0], "| R2:", best_model[1])
+
+
+# defining hyper parameters for each model in an dict
+
+param_grids = {
+    "KNN": {
+        "n_neighbors": [3, 5, 7, 9, 11, 15],
+        "weights": ["uniform", "distance"],
+        "p": [1, 2]
+    },
+    "Random Forest": {
+        "n_estimators": [100, 200, 300],
+        "max_depth": [5, 10, 15],
+        "min_samples_leaf": [1, 2, 4]
+    },
+    "Gradient Boosting": {
+        "n_estimators": [100, 200],
+        "learning_rate": [0.05, 0.1, 0.2],
+        "max_depth": [3, 5, 7]
+    },
+    "Ridge": {
+        "alpha": [0.01, 0.1, 1.0, 10.0]
+    },
+    "Lasso": {
+        "alpha": [0.01, 0.1, 1.0, 10.0]
+    },
+    "SVR": {
+        "C": [0.1, 1, 10],
+        "epsilon": [0.1, 0.2, 0.5],
+        "kernel": ["linear", "rbf"]
+    }
+}
+
+# tuning best model
+best_model_name = best_model[0]
+
+if best_model_name in param_grids:
+    print(f"\nRunning Hyperparameter Tuning for {best_model_name}...")
+    model_class = type(models[best_model_name])
+    grid = GridSearchCV(model_class(), param_grids[best_model_name], cv=5, scoring='r2')
+    grid.fit(x_train, y_train)
+
+    print("Best Parameters:", grid.best_params_)
+    print("Best Cross-Validated R2:", grid.best_score_)
+
+    best_model_tuned = grid.best_estimator_
+    y_pred_tuned = best_model_tuned.predict(x_test)
+
+    print("Tuned R2:", r2_score(y_test, y_pred_tuned))
+else:
+    print(f"No parameter grid defined for {best_model_name}.")
+
+
+    
+#checking if tuning is working wor each model or not
+#for model_name, params in param_grids.items():
+#    print(f"\n--- Tuning {model_name} ---")
+#    
+#    # Get the model class from the original models dict
+#    model_class = type(models[model_name]) if model_name in models else None
+    
+#    if model_class:
+#        grid = GridSearchCV(model_class(), params, cv=5, scoring='r2')
+#        grid.fit(x_train, y_train)
+        
+#        print("Best Parameters:", grid.best_params_)
+#        print("Best Cross-Validated R2:", grid.best_score_)
+        
+#        # Evaluate tuned model on test data
+#        tuned_model = grid.best_estimator_
+#        y_pred_tuned = tuned_model.predict(x_test)
+#        print("Test R2:", r2_score(y_test, y_pred_tuned))
+#    else:
+#        print(f"No model found for {model_name}")
