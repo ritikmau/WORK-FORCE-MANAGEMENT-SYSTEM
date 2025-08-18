@@ -1,6 +1,5 @@
-Here’s a **single, ready-to-use `README.md` file** you can copy and paste directly into your GitHub repository:
 
-````markdown
+````
 # 🚀 Workforce Management System
 
 This project applies multiple machine learning algorithms to **predict workforce allocation** and selects the **best-performing model** through evaluation and hyperparameter tuning.
