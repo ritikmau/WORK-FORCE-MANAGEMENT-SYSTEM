@@ -139,6 +139,3 @@ This layout uses:
 - **Future enhancements & license** for completeness  
 
 ---
-
-Would you like me to also **design a GitHub project banner (cover image)** for the top of your repo to make it even more eye-catching?
-```
