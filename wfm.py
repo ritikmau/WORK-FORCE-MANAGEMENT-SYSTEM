@@ -16,9 +16,6 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import GridSearchCV
 
 
-
-
-
 #step1 importing data
 df = pd.read_csv("C:/Users/VIVEK/OneDrive/Documents/DA EPRIME/ML/allocations.csv")
 
@@ -61,10 +58,6 @@ models = {
     "KNN": KNeighborsRegressor(n_neighbors=5),
     "SVR": SVR(kernel='rbf')
     }
-
-
-
-
 
 
 results = []
@@ -156,4 +149,5 @@ else:
 #        print("Test R2:", r2_score(y_test, y_pred_tuned))
 #    else:
 #        print(f"No model found for {model_name}")
+# you can check yourself by uncmmenting this block of code
 
